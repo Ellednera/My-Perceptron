@@ -1,0 +1,44 @@
+My-Perceptron
+
+My-Perceptron is still being developed. It is a module to train, validate 
+and test a perceptron. The module name will also change in the future.
+
+This module is not uploaded to CPAN. So the only wat to read the documentation is 
+by running the "perldoc" command
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+	perl Makefile.PL
+	make
+	make test
+	make install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc My::Perceptron
+
+You can also look for information at:
+
+    RT, CPAN's request tracker (report bugs here)
+        https://rt.cpan.org/NoAuth/Bugs.html?Dist=My-Perceptron
+
+    CPAN Ratings
+        https://cpanratings.perl.org/d/My-Perceptron
+
+    Search CPAN
+        https://metacpan.org/release/My-Perceptron
+
+
+LICENSE AND COPYRIGHT
+
+This software is Copyright (c) 2021 by Raphael Jong Jun Jie.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0 (GPL Compatible)
+
