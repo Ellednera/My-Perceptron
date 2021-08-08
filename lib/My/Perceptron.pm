@@ -290,6 +290,8 @@ sub load_perceptron {
     use Storable;
     my $loaded_perceptron = retrieve( $nerve_file_to_load );
     no Storable;
+    
+    $loaded_perceptron;
 }
 
 =head1 AUTHOR
