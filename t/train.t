@@ -38,8 +38,8 @@ ok ( -e TRAINING_DATA, "Found the training file" );
 
 # saving and loading - this should go into a new test script
 my $nerve_file = $FindBin::Bin . "/perceptron_1.nerve";
-ok( $perceptron->train( TRAINING_DATA, $nerve_file ), "No problem with \'train\' method so far" );
-is ( $perceptron->train( TRAINING_DATA, $nerve_file ), $nerve_file, "\'train\' method returns the correct value" );
+ok( $perceptron->train( TRAINING_DATA, "brand", $nerve_file ), "No problem with \'train\' method so far" );
+is ( $perceptron->train( TRAINING_DATA, "brand", $nerve_file ), $nerve_file, "\'train\' method returns the correct value" );
 
 ok( My::Perceptron->can("save_perceptron"), "&save_perceptron is persent" );
 ok( My::Perceptron->can("load_perceptron"), "&loaded_perceptron is present" );
@@ -48,7 +48,8 @@ ok( My::Perceptron::save_perceptron( $perceptron, $nerve_file ), "save_perceptro
 ok( -e $nerve_file, "Found the perceptron file" );
 
 ok( My::Perceptron::load_perceptron( $nerve_file ), "Perceptron loaded" );
-is( ref My::Perceptron::load_perceptron( $nerve_file ), MODULE_NAME, "Correct class after loading" );
+my $loaded_perceptron = My::Perceptron::load_perceptron( $nerve_file );
+is( ref $loaded_perceptron, MODULE_NAME, "Correct class after loading" );
 
 done_testing();
 
