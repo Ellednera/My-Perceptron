@@ -24,6 +24,8 @@ our $VERSION = '0.02';
 # default values
 use constant LEARNING_RATE => 0.05;
 use constant THRESHOLD => 0.5;
+use constant TUNE_UP => 1;
+use constant TUNE_DOWN => 0;
 
 =head1 SYNOPSIS
 
@@ -201,7 +203,7 @@ sub threshold {
 
 # TRAINING STAGE
 
-=head2 train( $stimuli_train_csv, $save_nerve_to_file )
+=head2 train( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file )
 
 Trains the perceptron. C<$stimuli_train> is the set of data/input (in CSV format) to train the perceptron while C<$save_nerve_to_file> is 
 the filename that will be generate each time the perceptron finishes the training process. This data file is the data of the C<My::Perceptron> 
@@ -214,11 +216,13 @@ you can write the following if you want to:
                             $perceptron->train( $stimuli_train, $save_nerve_to_file ) 
                         );
 
+C<$expected_output_header> is the header name in the csv file corresponding to the actual category or the exepcted value of the outcome. This is used to determine to tune the nerve up or down. This corresponding value should only be 0 or 1 for the sake of simplicity.
+
 =cut
 
 sub train {
     my $self = shift;
-    my( $stimuli_train_csv, $save_nerve_to_file ) = @_;
+    my( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file ) = @_;
     
     open my $data_fh, "<:encoding(UTF-8)", $stimuli_train_csv 
         or die "Can't open $stimuli_train_csv: $!";
@@ -234,7 +238,29 @@ sub train {
     # individual row
     while ( my $row = $csv->getline_hr($data_fh) ) {
         print $row->{book_name}, " -> "; print $row->{brand} ? "意林\n" : "魅丽优品\n";
-        # calculate the output
+
+        # calculate the output and fine tune parameters if necessary
+        # THIS PART IS STILL INCOMPLETE
+        while (1) {
+            my $output = _calculate_output( $self, $row );
+            
+            # $expected_output_header to be checked together over here
+            # if output >= threshold
+            #    then category/result aka output is considered 1
+            # else output considered 0
+            
+            # output expected/actual tuning
+            #    0       0             -
+            #    1       0             down
+            #    0       1             up
+            #    1       1             -
+            if ( ($output >= $self->threshold) and ( $row->{$expected_output_header} eq 0 ) ) {
+                _tune( $self, $row, TUNE_DOWN ); # at《恰好你在我身边》, this part will run non-stop
+                last; # break out during tests for the moment
+            } else {
+                last;
+            }
+        }
     }
 
     close $data_fh;
@@ -244,17 +270,54 @@ sub train {
     return $save_nerve_to_file;
 }
 
-=head2 _process_csv()
+=head2 _calculate_output( $self, \%stimuli_hash )
 
-Returns an array of headers that has the value of 1
+Calculates and returns the sum(weightage*input) for each individual row of data.
 
-=head2 _read_from_csv()
+C<%stimuli_hash> is the actual data to be used for training. It might contain useless columns.
 
+This will get all the avaible dendrites through the C<get_attributes> method and then use all the keys ie. headers to access the corresponding values.
 
+This subroutine shuold be called in the procedural way for now.
 
-=head2 _write_to_csv()
+=cut
 
+sub _calculate_output {
+    my $self = shift; 
+    my $stimuli_hash_ref = shift;
 
+    1; #0.01;
+}
+
+=head2 _tune( $self, \%stimuli_hash, $tune_up_or_down )
+
+Fine tunes the nerve. This will directly alter the attributes values in C<$self> according to the attributes/dendrites specified in C<new>.
+
+The C<%stimuli_hash> here is the same as the one in the C<_calculate_output> method.
+
+C<%stimuli_hash> will be used to determine which dendrite in C<$self> needs to be fine-tuned. As long as the value of any key in C<%stimuli_hash> returns true (1) then that dendrite in C<$self> will be tuned.
+
+Tuning up or down depends on C<$tune_up_or_down> specifed by the C<&_calculate_output> subroutine. The following constants can be used for C<$tune_up_or_down>:
+
+=over 4
+
+=item TUNE_UP
+
+Value is C<1>
+
+=item TUNE_DOWN
+
+Value is C<0>
+
+=back
+
+This subroutine shuold be called in the procedural way for now.
+
+=cut
+
+sub _tune {
+    1; #last; # calling last here will give warnings
+}
 
 =head2 &save_perceptron( $nerve_file )
 
