@@ -93,7 +93,7 @@ For C<%options>, the followings are needed unless mentioned:
 
 The value or thickness :) of ALL the dendrites when a new perceptron is created.
 
-The value should be between 0 and 1.
+Generally speaking, this value is usually between 0 and 1. However, it all depend on your combination of numbers for the other options.
 
 =item attribs => $array_ref
 
@@ -105,13 +105,15 @@ Optional. The default is C<0.05>.
 
 The learning rate or the "rest duration" of the perceptron for the fine-tuning process (between 0 and 1). 
 
-Generally speaking, the smaller the value the better.
+Generally speaking, the smaller the value the better. This value is usually between 0 and 1. However, it all depend on your combination of numbers for the other options.
 
 =item threshold => $decimal
 
 Optional. The default is C<0.5>
 
-This is the passing rate to determine the neuron output (0 or 1)
+This is the passing rate to determine the neuron output (0 or 1).
+
+Generally speaking, this value is usually between 0 and 1. However, it all depend on your combination of numbers for the other options.
 
 =back
 
@@ -203,46 +205,72 @@ sub threshold {
 
 # TRAINING STAGE
 
-=head2 train( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file )
+=head2 train( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file [, $display_stats, $identifier ] )
 
-Trains the perceptron. C<$stimuli_train> is the set of data/input (in CSV format) to train the perceptron while C<$save_nerve_to_file> is 
+Trains the perceptron. 
+
+C<$stimuli_train_csv> is the set of data/input (in CSV format) to train the perceptron while C<$save_nerve_to_file> is 
 the filename that will be generate each time the perceptron finishes the training process. This data file is the data of the C<My::Perceptron> 
 object and it is used in the C<validate> method.
 
-Returns C<$save_nerve_to_file> upon completion. This is useful if you are perfrorming the training and validation process in one go. So 
+C<$expected_output_header> is the header name of the columns in the csv file with the actual category or the exepcted values. This is used to determine to tune the nerve up or down. This value should only be 0 or 1 for the sake of simplicity.
+
+C<$display_stats> is B<optional> and the default is 0. It will display more output about the tuning process. It will show the followings:
+
+=over 4
+
+=item old sum
+
+The original sum of all C<weightage * input>
+
+=item new output as well as it was tuned up or down
+
+The new sum of all C<weightage * input> after fine-tuning the nerve
+
+=back
+
+If C<$display_stats> is set to C<1>, the you must specify the C<$identifier>. This is the column/header name that is used to identify a specific row of data in C<$stimuli_train_csv>.
+
+This method eturns C<$save_nerve_to_file> upon completion. This is useful if you are perfrorming the training and validation process in one go. So 
 you can write the following if you want to:
 
     $perceptron->validate(  $stimuli_validate, 
                             $perceptron->train( $stimuli_train, $save_nerve_to_file ) 
                         );
 
-C<$expected_output_header> is the header name in the csv file corresponding to the actual category or the exepcted value of the outcome. This is used to determine to tune the nerve up or down. This corresponding value should only be 0 or 1 for the sake of simplicity.
-
 =cut
 
 sub train {
     my $self = shift;
-    my( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file ) = @_;
+    my( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file, $display_stats, $identifier ) = @_;
     
+    $display_stats = 0 if not defined $display_stats;
+    if ( $display_stats and not defined $identifier ) {
+        croak "Please specifiy a string for \$identifier if you are trying to display stats";
+    }
+    
+    # CSV processing is all according to the documentation of Text::CSV
     open my $data_fh, "<:encoding(UTF-8)", $stimuli_train_csv 
         or die "Can't open $stimuli_train_csv: $!";
     
     my $csv = Text::CSV->new( {auto_diag => 1, binary => 1} );
     
     # tested up till here, here onwards, manual checking
-    # based on documentation of Text::CSV
     my $attrib = $csv->getline($data_fh);
     #use Data::Dumper;    #print Dumper($attrib);    #print $attrib;    #no Data::Dumper;
     $csv->column_names( $attrib );
 
     # individual row
-    while ( my $row = $csv->getline_hr($data_fh) ) {
-        print $row->{book_name}, " -> "; print $row->{brand} ? "意林\n" : "魅丽优品\n";
+    ROW: while ( my $row = $csv->getline_hr($data_fh) ) {
+        # print $row->{book_name}, " -> ";
+        # print $row->{$expected_output_header} ? "意林\n" : "魅丽优品\n";
 
         # calculate the output and fine tune parameters if necessary
         # THIS PART IS STILL INCOMPLETE
         while (1) {
             my $output = _calculate_output( $self, $row );
+            
+            #print "Sum = ", $output, "\n";
             
             # $expected_output_header to be checked together over here
             # if output >= threshold
@@ -255,17 +283,58 @@ sub train {
             #    0       1             up
             #    1       1             -
             if ( ($output >= $self->threshold) and ( $row->{$expected_output_header} eq 0 ) ) {
-                _tune( $self, $row, TUNE_DOWN ); # at《恰好你在我身边》, this part will run non-stop
-                last; # break out during tests for the moment
-            } else {
-                last;
-            }
+                _tune( $self, $row, TUNE_DOWN );
+
+                # debugging purpose
+                if ( $display_stats ) {
+                    print $row->{$identifier}, "\n";
+                    print "   -> TUNED DOWN";
+                    print "   Old sum = ", $output;
+                    print "   Threshold = ", $self->threshold;
+                    print "   New Sum = ", _calculate_output( $self, $row ), "\n";                
+                }
+                
+                #last; # break out during tests for the moment
+            } elsif ( ($output < $self->threshold) and ( $row->{$expected_output_header} eq 1 ) ) {
+                _tune( $self, $row, TUNE_UP );
+                
+                # debugging purpose
+                if ( $display_stats ) {
+                    print $row->{$identifier}, "\n";
+                    print "   -> TUNED UP";
+                    print "   Old sum = ", $output;
+                    print "   Threshold = ", $self->threshold;
+                    print "   New Sum = ", _calculate_output( $self, $row ), "\n";
+                }
+               # last;
+            } elsif ( ($output < $self->threshold) and ( $row->{$expected_output_header} eq 0 ) ) {
+            
+                if ( $display_stats ) {
+                    print $row->{$identifier}, "\n";
+                    print "   -> NO TUNING NEEDED";
+                    print "   Sum = ", _calculate_output( $self, $row );
+                    print "   Threshold = ", $self->threshold, "\n";
+                }
+                
+                next ROW;
+                
+            } elsif ( ($output >= $self->threshold) and ( $row->{$expected_output_header} eq 1 ) ) {
+            
+                if ( $display_stats ) {
+                    print $row->{$identifier}, "\n";
+                    print "   -> NO TUNING NEEDED";
+                    print "   Sum = ", _calculate_output( $self, $row );
+                    print "   Threshold = ", $self->threshold, "\n";
+                }
+                
+                next ROW;
+            } #else { print "Something's not right\n'" }
         }
     }
 
     close $data_fh;
     
-    #save_perceptron( $save_nerve_to_file );
+    save_perceptron( $self, $save_nerve_to_file );
     
     return $save_nerve_to_file;
 }
@@ -285,8 +354,20 @@ This subroutine shuold be called in the procedural way for now.
 sub _calculate_output {
     my $self = shift; 
     my $stimuli_hash_ref = shift;
-
-    1; #0.01;
+    
+    my %dendrites = $self->get_attributes;
+    my $sum; # this is the output
+    
+    for ( keys %dendrites ) {
+        # if input is 1 for a dendrite, then calculate it
+        if ( $stimuli_hash_ref->{ $_ } ) {
+            # $sum += $dendrites{ $_ } * 1; # no need, if 1 then it is always the value itself
+            # this is very efficient, nice :)
+            $sum += $dendrites{ $_ };
+        }
+    }
+    $sum;
+    #1; #0.01;
 }
 
 =head2 _tune( $self, \%stimuli_hash, $tune_up_or_down )
@@ -316,6 +397,30 @@ This subroutine shuold be called in the procedural way for now.
 =cut
 
 sub _tune {
+    my $self = shift; 
+    my ( $stimuli_hash_ref, $tuning_status ) = @_;
+
+    my %dendrites = $self->get_attributes;
+
+    for ( keys %dendrites ) {
+        if ( $tuning_status == TUNE_DOWN ) {
+            
+            if ( $stimuli_hash_ref->{ $_ } ) { # must check this one, it must be 1 before we can alter the actual dendrite size in the nerve :)
+                $self->{ attributes_hash_ref }{ $_ } -= $self->learning_rate;
+            }
+            
+            #print $_, ": ", $self->{ attributes_hash_ref }{ $_ }, "\n";
+            
+        } elsif ( $tuning_status == TUNE_UP ) {
+            if ( $stimuli_hash_ref->{ $_ } ) {
+                $self->{ attributes_hash_ref }{ $_ } += $self->learning_rate;
+            }
+            #print $_, ": ", $self->{ attributes_hash_ref }{ $_ }, "\n";
+            
+        }
+    }
+
+    #print "_tune returned 1\n";
     1; #last; # calling last here will give warnings
 }
 
@@ -351,10 +456,10 @@ This subroutine is to be called in the procedural way. No checking is done curre
 sub load_perceptron {
     my $nerve_file_to_load = shift;
     use Storable;
-    my $loaded_perceptron = retrieve( $nerve_file_to_load );
+    my $loaded_nerve = retrieve( $nerve_file_to_load );
     no Storable;
     
-    $loaded_perceptron;
+    $loaded_nerve;
 }
 
 =head1 AUTHOR
