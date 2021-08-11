@@ -11,10 +11,12 @@ use My::Perceptron;
 use FindBin;
 use constant TRAINING_DATA => $FindBin::Bin . "/book_list_train.csv";
 use constant MODULE_NAME => "My::Perceptron";
+use constant WANT_STATS => 1;
+use constant IDENTIFIER => "book_name";
 
-# 39 headers
+# 36 headers
 my @attributes = qw ( 
-    book_name	brand	predicted	glossy_cover	has_plastic_layer_on_cover	male_present	female_present	total_people_1	total_people_2	total_people_3
+    glossy_cover	has_plastic_layer_on_cover	male_present	female_present	total_people_1	total_people_2	total_people_3
 	total_people_4	total_people_5_n_above	has_flowers	flower_coverage_more_than_half	has_leaves	leaves_coverage_more_than_half	has_trees
 	trees_coverage_more_than_half	has_other_living_things	has_fancy_stuff	has_obvious_inanimate_objects	red_shades	blue_shades	yellow_shades
 	orange_shades	green_shades	purple_shades	brown_shades	black_shades	overall_red_dominant	overall_green_dominant
@@ -24,7 +26,7 @@ my @attributes = qw (
 my $total_headers = scalar @attributes;
 
 my $perceptron = My::Perceptron->new( {
-    initial_value => 0.7,
+    initial_value => 0.01,
     attribs => \@attributes
 } );
 
@@ -38,8 +40,17 @@ ok ( -e TRAINING_DATA, "Found the training file" );
 
 # saving and loading - this should go into a new test script
 my $nerve_file = $FindBin::Bin . "/perceptron_1.nerve";
-ok( $perceptron->train( TRAINING_DATA, "brand", $nerve_file ), "No problem with \'train\' method so far" );
-is ( $perceptron->train( TRAINING_DATA, "brand", $nerve_file ), $nerve_file, "\'train\' method returns the correct value" );
+#ok( $perceptron->train( TRAINING_DATA, "brand", $nerve_file, WANT_STATS, IDENTIFIER ), "No problem with \'train\' method so far" );
+
+{
+local $@ = "";
+eval { $perceptron->train( TRAINING_DATA, "brand", $nerve_file, WANT_STATS, IDENTIFIER) };
+is ( $@, "", "No problem with \'train\' method (verbose) so far" );
+}
+
+ok ( $perceptron->train( TRAINING_DATA, "brand", $nerve_file), "No problem with \'train\' method (non-verbose) so far" );
+
+is ( $perceptron->train( TRAINING_DATA, "brand", $nerve_file), $nerve_file, "\'train\' method returns the correct value" );
 
 ok( My::Perceptron->can("save_perceptron"), "&save_perceptron is persent" );
 ok( My::Perceptron->can("load_perceptron"), "&loaded_perceptron is present" );

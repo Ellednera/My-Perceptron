@@ -14,11 +14,11 @@ done_testing;
 #   [v] able to save the actual perceptron object and load it back
 #
 # Version 0.02
-#   [] implement output algorithm for train and finalize it
-#       [] read and calculate data line by line, not bulk, so no shuffling method
+#   [v] implement output algorithm for train and finalize it
+#   [v] read and calculate data line by line, not bulk, so no shuffling method
 #   [] implement validate and testing gist
 #       [] read csv bulk - for validating and testing stages
-#       [] write into a new csv file - validation and testing stages, this is definitely bulk data
+#       [] !! write into a new csv file - validation and testing stages, this is definitely bulk data
 #
 # Version 0.03
 #   -implement fully both validate and testing method
