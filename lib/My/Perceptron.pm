@@ -6,7 +6,7 @@ use warnings;
 use Carp "croak";
 
 use utf8;
-use Text::CSV;
+use Text::CSV qw(csv);
 binmode STDOUT, ":utf8";
 
 =head1 NAME
@@ -55,10 +55,9 @@ use constant TUNE_DOWN => 0;
 
 =head1 DESCRIPTION
 
-This module provides methods to build, train, validate and test a perceptron. It can also save the data of the 
-perceptron for future use of for any actual AI programs.
+This module provides methods to build, train, validate and test a perceptron. It can also save the data of the perceptron for future use of for any actual AI programs.
 
-See wikipedia for more info about perceptron.
+This module is also aimed to help newbies to be able to grasp hold of the concept of perceptron, training, validation and testing concept as much as possible. Hence, all the methods and subroutines in this module are decoupled as much as possible so that the actual scripts can be written as simple complete programs.
 
 The implementation here is super basic as it only takes in input of the dendrites and calculate the output. If the output is 
 higher than the threshold, the final result (category) will be 1 aka perceptron is activated. If not, then the 
@@ -422,6 +421,103 @@ sub _tune {
 
     #print "_tune returned 1\n";
     1; #last; # calling last here will give warnings
+}
+
+
+=head2 validate ( \%options )
+
+B<This method is not ready yet!>
+
+This method validates the perceptron against another set of data after it has undergone the training process.
+
+This method calculates the output of each row of data and write the result into the predicted column. The data begin written into the new file or the original file will maintain it's sequence.
+
+Please take note that this method will load all the data of the validation stimuli, so please split your stimuli into multiple files if possible and call this method a few more times.
+
+For C<%options>, the followings are needed unless mentioned:
+
+=over 4
+
+=item stimuli_validate => $csv_file
+
+This is the CSV file containing the validation data, make sure that it contains a column with the predicted values as it is needed in the next key mentioned: C<predicted_column_index>
+
+=item predicted_column_index => $index
+
+This is the index of the column that contains the predicted output values. C<$index> starts from C<0>.
+
+This part will be filled and saved to C<results_write_to>.
+
+=item results_write_to => $new_csv_file
+
+Optional.
+
+The default behaviour will write the predicted output into C<stimuli_validate> ie the original data while maintaining the original sequence.
+
+=back
+
+=cut
+
+sub validate {
+
+    my $self = shift;   my $data_hash_ref = shift;
+    
+    my $stimuli_validate = $data_hash_ref->{ stimuli_validate };
+    my $actual_index = $data_hash_ref->{ actual_column_index };
+    my $predicted_index = $data_hash_ref->{ predicted_column_index };
+    
+    my $output_file;
+    if ( defined $data_hash_ref->{ results_write_to } ) {
+        $output_file = $data_hash_ref->{ results_write_to };
+    } else {
+        $output_file = $stimuli_validate;
+    }
+    
+    # open for writing results
+    my $aoa = csv (in => $stimuli_validate, encoding => ":encoding(utf-8)");
+
+    my $attrib_array_ref = shift @$aoa;
+
+
+    # open for calculation of results
+    # completed up till here    
+    ###################################################
+    # CSV processing is all according to the documentation of Text::CSV
+    open my $data_fh, "<:encoding(UTF-8)", $stimuli_validate 
+        or die "Can't open $stimuli_validate: $!";
+    
+    my $csv = Text::CSV->new( {auto_diag => 1, binary => 1} );
+    
+    my $attrib = $csv->getline($data_fh);
+    #use Data::Dumper;    #print Dumper($attrib);    #print $attrib;    #no Data::Dumper;
+    $csv->column_names( $attrib );
+
+    # individual row
+    my $row = 0;
+    while ( my $row = $csv->getline_hr($data_fh) ) {
+        
+        if ( _calculate_output( $self, $row )  >= $self->threshold ) {
+            # write 1 into aoa
+            $aoa->[ $row ][ $predicted_index ] = 1;
+        } else {
+            #write 0 into aoa
+            $aoa->[ $row ][ $predicted_index ] = 0;
+        }
+        
+        $row++;
+    }
+    
+    close $data_fh;
+    ###################################################
+
+    unshift @$aoa, $attrib_array_ref;
+    print Dumper( $aoa ), "\n";
+
+    print "Press enter to save to file\n"; # debug
+    <>;
+    csv( in => $aoa, out => $output_file, encoding => ":encoding(utf-8)" );
+    print "Done!\n";
+
 }
 
 =head2 &save_perceptron( $nerve_file )
