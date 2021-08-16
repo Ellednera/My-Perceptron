@@ -42,7 +42,13 @@ for ( 0..5 ) {
 }
 #print Dumper($perceptron), "\n";
 
-
+$perceptron->validate( {
+    stimuli_validate => $FindBin::Bin . "/some.csv",
+    # attributes_involved => \@attributes, # no need, the long list of attribs, $self already has the attributes
+    # actual_column_index => 3, # useless for now, only needed for confusion matrix
+    predicted_column_index => 4,
+    results_write_to => $FindBin::Bin . "/new.csv" # optional, default back to 'stimuli'
+} );
 
 
 # besiyata d'shmaya

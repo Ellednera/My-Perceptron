@@ -16,9 +16,12 @@ done_testing;
 # Version 0.02
 #   [v] implement output algorithm for train and finalize it
 #   [v] read and calculate data line by line, not bulk, so no shuffling method
-#   [] implement validate and testing gist
+#   [v] implement validate gist
 #       [] read csv bulk - for validating and testing stages
-#       [] !! write into a new csv file - validation and testing stages, this is definitely bulk data
+#       [] write into a new csv file - validation and testing stages
+#   [] implement testing gist
+#       [] read csv bulk - for validating and testing stages
+#       [] write into a new csv file - validation and testing stages
 #
 # Version 0.03
 #   -implement fully both validate and testing method
