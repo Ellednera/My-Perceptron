@@ -1,10 +1,23 @@
 Revision history for My-Perceptron
 
-0.01    8 AUGUST 2021
-        * First version, released on an unsuspecting world.
-        * The followings have been implemented:
-            * create perceptron
-            * process data: &train method
-                * read csv - for training stage
-            * save and load the perceptron
+Version 0.02    17 AUGUST 2021
+* The followings have been implemented:
+    * output algorithm for train
+        * read and calculate data line by line
+    * validate method
+        * read csv bulk
+        * write predicted values into original file
+        * write predicted values into new file
+    * test method
+        * read csv bulk
+        * write predicted values into original file
+        * write predicted values into new file
+
+Version 0.01    8 AUGUST 2021
+* First version, released on an unsuspecting world.
+* The followings have been implemented:
+    * create perceptron
+    * process data: &train method
+        * read csv - for training stage
+    * save and load the perceptron
 
