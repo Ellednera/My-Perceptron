@@ -31,41 +31,89 @@ use constant TUNE_DOWN => 0;
 
     #!/usr/bin/perl
 
-    use AI::Perceptron::Simple;
+    use My::Perceptron;
 
-    # the codes are expected to look something like this
-    $perceptron->new;
+    # create a new nerve / neuron / perceptron
+    $perceptron = My::Perceptron->new( {
+        initial_value => $any_value_that_makes_sense,
+        learning_rate => 0.3, # optional
+        threshold => 0.85, # optional
+        attribs => \@attributes, # dendrites / header names in csv files to train
+    } );
 
-    # these three steps could be done in seperated scripts if necessary
-    # &train and &validate could be put inside a loop or something
-    $perceptron->train( $file_train );
-    $perceptron->validate( $file_validate );
-    $perceptron->test( $file_test );
+    # training
+    $perceptron->train( $training_data_csv, $expected_column_name, $save_nerve_to );
+    # or
+    $perceptron->train(
+        $training_data_csv, $expected_column_name, $save_nerve_to, 
+        $show_progress, $identifier); # these two parameters must go together
 
-    # show results ie confusion matrix
+
+    # validating
+    # fill results to original file
+    $perceptron->validate( { 
+        stimuli_validate => $validation_data_csv, 
+        predicted_column_index => 4,
+     } );
+    # or        
+    # fill results to a new file
+    $perceptron->validate( {
+        stimuli_validate => $validation_data_csv,
+        predicted_column_index => 4,
+        results_write_to => $new_csv
+    } );
+
+
+    # testing, parameters same as validate
+    $perceptron->test( { 
+        stimuli_validate => $testing_data_csv, 
+        predicted_column_index => 4,
+     } );
+    # or        
+    # fill results to a new file
+    $perceptron->test( {
+        stimuli_validate => $testing_data_csv,
+        predicted_column_index => 4,
+        results_write_to => $new_csv
+    } );
+
+
+    # confusion matrix (not implemented yet)
     # (TP-true positive, TN-true negative, FP-false positive, FN-false negative)
-    # this should only be done during validation and testing
-    $perceptron->generate_confusion_matrix;
+    # this should only be done after validation and testing
+    my %c_matrix = $perceptron->get_confusion_matrix( { 
+        full_data_file => $file_csv, 
+        actual_output_header => $header_name,
+        predicted_output_header => $predicted_header_name
+        ...
+    } );
+
+    # accessing the confusion matrix
+    for ( true_positive true_negative false_positive false_negative accuracy sensitivity  ) {
+        print $_, " => ", $c_matrix{ $_ }, "\n";
+    }
+
+    $perceptron->display_confusion_matrix; # output to console
+
 
     # save data of the trained perceptron
-    $perceptron->save_data( $data_file );
+    My::Perceptron::save_perceptron( $perceptron, $nerve_file );
 
     # load data of percpetron for use in actual program
-    $perceptron->load_data( $data_file );
+    my $loaded_perceptron = My::Perceptron::load_perceptron( $nerve_file );
 
 =head1 DESCRIPTION
 
-This module provides methods to build, train, validate and test a perceptron. It can also save the data of the perceptron for future use of for any actual AI programs.
+This module provides methods to build, train, validate and test a perceptron. It can also save the data of the perceptron for future use for any actual AI programs.
 
-This module is also aimed to help newbies to be able to grasp hold of the concept of perceptron, training, validation and testing concept as much as possible. Hence, all the methods and subroutines in this module are decoupled as much as possible so that the actual scripts can be written as simple complete programs.
+This module is also aimed to help newbies grasp hold of the concept of perceptron, training, validation and testing as much as possible. Hence, all the methods and subroutines in this module are decoupled as much as possible so that the actual scripts can be written as simple complete programs.
 
 The implementation here is super basic as it only takes in input of the dendrites and calculate the output. If the output is 
 higher than the threshold, the final result (category) will be 1 aka perceptron is activated. If not, then the 
 result will be 0 (not activated).
 
 Depending on how you view or categorize the final result, the perceptron will fine tune itself (aka train) based on 
-the learning rate until the desired result is met. Everything from here on is all mathematics and numbers. 
-The data will only makes sense to the computer and not humans anymore.
+the learning rate until the desired result is met. Everything from here on is all mathematics and numbers which only makes sense to the computer and not humans anymore.
 
 Whenever the perceptron fine tunes itself, it will increase/decrease all the dendrites that is significant (attributes  
 labelled 1) for each input. This means that even when the perceptron successfully fine tunes itself to suite all 
@@ -76,7 +124,9 @@ except the programmer himself/herself :)
 
 =head1 EXPORT
 
-None. Almost everything is OO
+None. 
+
+Almost everything is OO with some exceptions of course :)
 
 =head1 SUBROUTINES/METHODS
 
@@ -130,6 +180,8 @@ sub new {
     $data{ learning_rate } = LEARNING_RATE if not exists $data{ learning_rate };
     $data{ threshold } = THRESHOLD if not exists $data{ threshold };
     
+    # don't pack this key checking process into a subroutine for now
+    # this is also used in &_real_validate_or_test
     my @missing_keys;
     for ( qw( initial_value attribs ) ) {
         push @missing_keys, $_ unless exists $data{ $_ };
@@ -230,12 +282,7 @@ The new sum of all C<weightage * input> after fine-tuning the nerve
 
 If C<$display_stats> is set to C<1>, the you must specify the C<$identifier>. This is the column/header name that is used to identify a specific row of data in C<$stimuli_train_csv>.
 
-This method eturns C<$save_nerve_to_file> upon completion. This is useful if you are perfrorming the training and validation process in one go. So 
-you can write the following if you want to:
-
-    $perceptron->validate(  $stimuli_validate, 
-                            $perceptron->train( $stimuli_train, $save_nerve_to_file ) 
-                        );
+This method returns C<$save_nerve_to_file> upon completion which might be useful
 
 =cut
 
@@ -338,15 +385,15 @@ sub train {
     return $save_nerve_to_file;
 }
 
-=head2 _calculate_output( $self, \%stimuli_hash )
+=head2 &_calculate_output( $self, \%stimuli_hash )
 
-Calculates and returns the sum(weightage*input) for each individual row of data.
+Calculates and returns the C<sum(weightage*input)> for each individual row of data. For the coding part, it justs add up all the existing weight since C<input> is always 1 for now :)
 
 C<%stimuli_hash> is the actual data to be used for training. It might contain useless columns.
 
 This will get all the avaible dendrites through the C<get_attributes> method and then use all the keys ie. headers to access the corresponding values.
 
-This subroutine shuold be called in the procedural way for now.
+This subroutine should be called in the procedural way for now.
 
 =cut
 
@@ -369,7 +416,7 @@ sub _calculate_output {
     #1; #0.01;
 }
 
-=head2 _tune( $self, \%stimuli_hash, $tune_up_or_down )
+=head2 &_tune( $self, \%stimuli_hash, $tune_up_or_down )
 
 Fine tunes the nerve. This will directly alter the attributes values in C<$self> according to the attributes/dendrites specified in C<new>.
 
@@ -391,7 +438,7 @@ Value is C<0>
 
 =back
 
-This subroutine shuold be called in the procedural way for now.
+This subroutine should be called in the procedural way for now.
 
 =cut
 
@@ -426,8 +473,6 @@ sub _tune {
 
 =head2 validate ( \%options )
 
-B<This method is not ready yet!>
-
 This method validates the perceptron against another set of data after it has undergone the training process.
 
 This method calculates the output of each row of data and write the result into the predicted column. The data begin written into the new file or the original file will maintain it's sequence.
@@ -456,32 +501,87 @@ The default behaviour will write the predicted output into C<stimuli_validate> i
 
 =back
 
+I<*This method will call &_real_validate_or_test to do the actual work.>
+
 =cut
 
 sub validate {
+    my ( $self, $data_hash_ref ) = @_;
+    $self->_real_validate_or_test( $data_hash_ref );
+}
+
+=head2 test ( \%options )
+
+This method is used to put the trained nerve to the test. You can think of it as deploying the nerve for the actual work.
+
+This method works and behaves the same way as the C<validate> method. See C<validate> for the details.
+
+I<*This method will call &_real_validate_or_test to do the actual work.>
+
+=cut
+
+sub test {
+    my ( $self, $data_hash_ref ) = @_;
+    $self->_real_validate_or_test( $data_hash_ref );
+}
+
+=head2 _real_validate_or_test ( $data_hash_ref )
+
+This is where the actual validation or testing takes place. 
+
+C<$data_hash_ref> is the list of parameters passed into the C<validate> or C<test> methods.
+
+This is a B<method>, so use the OO way. This is one of the exceptions to the rules where private subroutines are treated as methods :)
+
+=cut
+
+sub _real_validate_or_test {
 
     my $self = shift;   my $data_hash_ref = shift;
     
+    # don't pack this into a subroutine
+    my @missing_keys;
+    for ( qw( stimuli_validate predicted_column_index ) ) {
+        push @missing_keys, $_ unless exists $data_hash_ref->{ $_ };
+    }
+    
+    croak "Missing keys: @missing_keys" if @missing_keys;
+    
     my $stimuli_validate = $data_hash_ref->{ stimuli_validate };
-    my $actual_index = $data_hash_ref->{ actual_column_index };
     my $predicted_index = $data_hash_ref->{ predicted_column_index };
     
-    my $output_file;
-    if ( defined $data_hash_ref->{ results_write_to } ) {
-        $output_file = $data_hash_ref->{ results_write_to };
-    } else {
-        $output_file = $stimuli_validate;
-    }
+    # actual processing starts here
+    my $output_file = defined $data_hash_ref->{ results_write_to } 
+                        ? $data_hash_ref->{ results_write_to }
+                        : $stimuli_validate;
     
     # open for writing results
     my $aoa = csv (in => $stimuli_validate, encoding => ":encoding(utf-8)");
+    #die ref $aoa;
+    my $attrib_array_ref = shift @$aoa; # 'remove' the header, it's annoying :)
 
-    my $attrib_array_ref = shift @$aoa;
+    $aoa = _fill_predicted_values( $self, $stimuli_validate, $predicted_index, $aoa );
 
+    # put back the array of headers before saving file
+    unshift @$aoa, $attrib_array_ref;
 
-    # open for calculation of results
-    # completed up till here    
-    ###################################################
+    print "Saving data to $output_file\n";
+    csv( in => $aoa, out => $output_file, encoding => ":encoding(utf-8)" );
+    print "Done saving!\n";
+
+}
+
+=head2 &_fill_predicted_values ( $self, $stimuli_validate, $predicted_index, $aoa )
+
+This is where the filling in of the predicted values takes place. Take note that the parameters naming are the same as the ones used in the C<validate> and C<test> method.
+
+This subroutine should be called in the procedural way
+
+=cut
+
+sub _fill_predicted_values {
+    my ( $self, $stimuli_validate, $predicted_index, $aoa ) = @_;
+
     # CSV processing is all according to the documentation of Text::CSV
     open my $data_fh, "<:encoding(UTF-8)", $stimuli_validate 
         or die "Can't open $stimuli_validate: $!";
@@ -494,9 +594,9 @@ sub validate {
 
     # individual row
     my $row = 0;
-    while ( my $row = $csv->getline_hr($data_fh) ) {
+    while ( my $data = $csv->getline_hr($data_fh) ) {
         
-        if ( _calculate_output( $self, $row )  >= $self->threshold ) {
+        if ( _calculate_output( $self, $data )  >= $self->threshold ) {
             # write 1 into aoa
             $aoa->[ $row ][ $predicted_index ] = 1;
         } else {
@@ -508,16 +608,8 @@ sub validate {
     }
     
     close $data_fh;
-    ###################################################
-
-    unshift @$aoa, $attrib_array_ref;
-    print Dumper( $aoa ), "\n";
-
-    print "Press enter to save to file\n"; # debug
-    <>;
-    csv( in => $aoa, out => $output_file, encoding => ":encoding(utf-8)" );
-    print "Done!\n";
-
+    
+    $aoa;
 }
 
 =head2 &save_perceptron( $nerve_file )
@@ -599,7 +691,11 @@ L<https://metacpan.org/release/My-Perceptron>
 
 =head1 ACKNOWLEDGEMENTS
 
-Besiyata d'shmaya
+Besiyata d'shmaya, Wikipedia
+
+=head1 SEE ALSO
+
+AI::Perceptron, Text::Matrix
 
 =head1 LICENSE AND COPYRIGHT
 
