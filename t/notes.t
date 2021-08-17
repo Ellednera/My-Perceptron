@@ -16,20 +16,17 @@ done_testing;
 # Version 0.02
 #   [v] implement output algorithm for train and finalize it
 #   [v] read and calculate data line by line, not bulk, so no shuffling method
-#   [v] implement validate gist
-#       [] read csv bulk - for validating and testing stages
-#       [] write into a new csv file - validation and testing stages
-#   [] implement testing gist
-#       [] read csv bulk - for validating and testing stages
-#       [] write into a new csv file - validation and testing stages
+#   [v] implement validate method
+#       [v] read csv bulk - for validating and testing stages
+#       [v] write into a new csv file - validation and testing stages
+#   [v] implement testing method
+#       [v] read csv bulk - for validating and testing stages
+#       [v] write into a new csv file - validation and testing stages
 #
 # Version 0.03
-#   -implement fully both validate and testing method
-#
-# Version 0.04
 #   -implement confusion matrix
 #
-# Version 0.05
+# Version 0.04
 #   -add synonyms
 #
 # Version 0.0x
