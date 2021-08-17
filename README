@@ -1,10 +1,11 @@
 My-Perceptron
 
-My-Perceptron is still being developed. It is a module to train, validate 
-and test a perceptron. The module name will also change in the future.
+This module provides methods to build, train, validate and test a perceptron. It can also save the data of the perceptron for future use for any actual AI programs.
 
-This module is not uploaded to CPAN. So the only wat to read the documentation is 
-by running the "perldoc" command
+This module is also aimed to help newbies grasp hold of the concept of perceptron, training, validation and testing as much as possible. Hence, all the methods and subroutines in this module are decoupled as much as possible so that the actual scripts can be written as simple complete programs.
+
+This module is not uploaded to CPAN. So the only way to read the documentation is 
+by running the "perldoc" command.
 
 INSTALLATION
 
