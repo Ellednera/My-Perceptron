@@ -1,15 +1,18 @@
 Changes
+docs/My-Perceptron.html
 lib/My/Perceptron.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
 README
 t/00-load.t
+t/book_list_test-filled-non-binary.csv
 t/book_list_test-filled.csv
 t/book_list_test.csv
 t/book_list_train.csv
 t/book_list_validate-filled.csv
 t/book_list_validate.csv
+t/confusion_matrix.t
 t/creation.t
 t/manifest.t
 t/notes.t
@@ -21,5 +24,3 @@ t/train.t
 t/train_validate_combined.t
 t/validate.t
 xt/boilerplate.t
-META.yml                                 Module YAML meta-data (added by MakeMaker)
-META.json                                Module JSON meta-data (added by MakeMaker)
