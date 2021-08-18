@@ -15,11 +15,11 @@ My::Perceptron
 
 =head1 VERSION
 
-Version 0.01
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 # default values
 use constant LEARNING_RATE => 0.05;
@@ -222,7 +222,7 @@ sub get_attributes {
 
 If C<$value> is given, sets the learning rate to C<$value>. If not, then it returns the learning rate.
 
-The C<$value> should be between 0 and 1. Default is C<0.05>
+The C<$value> should be between C<0> and C<1>. Default is C<0.05>
 
 =cut
 
@@ -239,9 +239,9 @@ sub learning_rate {
 
 =head2 threshold
 
-If C<$value> is given, sets the threshold/passing rate to C<$value>. If not, then it returns the passing rate.
+If C<$value> is given, sets the threshold / passing rate to C<$value>. If not, then it returns the passing rate.
 
-The C<$value> should be between 0 and 1. Default is C<0.5> ie 50%
+The C<$value> should be between C<0> and C<1>. Default is C<0.5>
 
 =cut
 
@@ -260,7 +260,7 @@ sub threshold {
 
 Trains the perceptron. 
 
-C<$stimuli_train_csv> is the set of data/input (in CSV format) to train the perceptron while C<$save_nerve_to_file> is 
+C<$stimuli_train_csv> is the set of data / input (in CSV format) to train the perceptron while C<$save_nerve_to_file> is 
 the filename that will be generate each time the perceptron finishes the training process. This data file is the data of the C<My::Perceptron> 
 object and it is used in the C<validate> method.
 
@@ -280,9 +280,7 @@ The new sum of all C<weightage * input> after fine-tuning the nerve
 
 =back
 
-If C<$display_stats> is set to C<1>, the you must specify the C<$identifier>. This is the column/header name that is used to identify a specific row of data in C<$stimuli_train_csv>.
-
-This method returns C<$save_nerve_to_file> upon completion which might be useful
+If C<$display_stats> is set to C<1>, the you must specify the C<$identifier>. This is the column / header name that is used to identify a specific row of data in C<$stimuli_train_csv>.
 
 =cut
 
@@ -380,9 +378,8 @@ sub train {
 
     close $data_fh;
     
-    save_perceptron( $self, $save_nerve_to_file );
+    save_perceptron( $self, $save_nerve_to_file ); # this doesn't return anything
     
-    return $save_nerve_to_file;
 }
 
 =head2 &_calculate_output( $self, \%stimuli_hash )
@@ -418,7 +415,7 @@ sub _calculate_output {
 
 =head2 &_tune( $self, \%stimuli_hash, $tune_up_or_down )
 
-Fine tunes the nerve. This will directly alter the attributes values in C<$self> according to the attributes/dendrites specified in C<new>.
+Fine tunes the nerve. This will directly alter the attributes values in C<$self> according to the attributes / dendrites specified in C<new>.
 
 The C<%stimuli_hash> here is the same as the one in the C<_calculate_output> method.
 
@@ -467,7 +464,7 @@ sub _tune {
     }
 
     #print "_tune returned 1\n";
-    1; #last; # calling last here will give warnings
+    #1; #last; # calling last here will give warnings
 }
 
 
@@ -610,6 +607,153 @@ sub _fill_predicted_values {
     close $data_fh;
     
     $aoa;
+}
+
+=head2 get_confusion_matrix ( \%options )
+
+Returns the confusion matrix in the form of a hash. The hash will contain these keys: C<true_positive>, C<true_negative>, C<false_positive>, C<false_negative>, C<accuracy>, C<sensitivity>.
+
+Take note that the C<accuracy> and C<sensitivity> are in percentage (%) in decimal (if any).
+
+For C<%options>, the followings are needed unless mentioned:
+
+=over 4
+
+=item full_data_file => $filled_test_file
+
+This is the CSV file filled with the predicted values. 
+
+Make sure that you don't do anything to the actual and predicted output in this file after testing the nerve. These two columns must contain binary values only!
+
+=item actual_output_header => $actual_column_name
+
+=item predicted_output_header => $predicted_column_name
+
+=back
+
+The binary values are treated as follows:
+
+=over 4
+
+=item C<0> is negative
+
+=item C<1> is positive
+
+=back
+
+=cut
+
+sub get_confusion_matrix {
+    my ( $self, $info ) = @_;
+
+    my %c_matrix = _collect_stats( $info ); # sub again: accuracy, sensitivity
+    
+    %c_matrix;
+}
+
+
+=head2 &_collect_stats ( \%options )
+
+Generates a hash of confusion matrix based on C<%options> given in the C<get_confusion_matrix> method.
+
+=cut
+
+sub _collect_stats {
+    my $info = shift;
+    my $file = $info->{ full_data_file };
+    my $actual_header = $info->{ actual_output_header };
+    my $predicted_header = $info->{ predicted_output_header };
+    
+    my %c_matrix = ( 
+        true_positive => 0, true_negative => 0, false_positive => 0, false_negative => 0,
+        accuracy => 0, sensitivity => 0
+    );
+    
+    # CSV processing is all according to the documentation of Text::CSV
+    open my $data_fh, "<:encoding(UTF-8)", $file
+        or die "Can't open $file: $!";
+    
+    my $csv = Text::CSV->new( {auto_diag => 1, binary => 1} );
+    
+    my $attrib = $csv->getline($data_fh); # get the row of headers, can't specify any column
+    # shouldn't be a problem, since we're reading line by line :)
+
+    $csv->column_names( $attrib );
+
+    # individual row
+    #use Data::Dumper;
+    
+    while ( my $row = $csv->getline_hr($data_fh) ) {
+        #print Dumper( $row ), "\n";
+        #print "Actual: ", $row->{$actual_header}, " Predicted: ", $row->{$predicted_header}, "\n";
+        
+        if ( $row->{ $actual_header } == 1 and $row->{ $predicted_header } == 1 ) {
+
+            # true positive
+            $c_matrix{ true_positive }++;
+            
+        } elsif ( $row->{ $actual_header } == 0 and $row->{ $predicted_header } == 0 ) {
+            
+            # true negative
+            $c_matrix{ true_negative }++;
+            
+        } elsif ( $row->{ $actual_header } == 1 and $row->{ $predicted_header } == 0 ) {
+            
+            # false negative
+            $c_matrix{ false_negative }++;
+            
+        } elsif ( $row->{ $actual_header } == 0 and $row->{ $predicted_header } == 1 ) {
+            
+            # false positive
+            $c_matrix{ false_positive }++;
+            
+        } else {
+            croak "Something's wrong!\n".
+            "Make sure that the actual and predicted values in your file are binary ie 0 or 1" ;
+        }
+    }
+    # no Data::Dumper;
+
+    _calculate_sensitivity( \%c_matrix );
+    
+    _calculate_accuracy( \%c_matrix );
+    
+    %c_matrix;
+}
+
+=head2 &_calculate_accuracy ( $c_matrix_ref )
+
+Calculates and adds the data for the C<accuracy> key in the confusion matrix hash.
+
+=cut
+
+sub _calculate_accuracy {
+
+    my $c_matrix = shift;
+    
+    my $numerator = $c_matrix->{ true_positive } + $c_matrix->{ true_negative };
+    my $denominator = $numerator + $c_matrix->{ false_positive } + $c_matrix->{ false_negative };
+    
+    $c_matrix->{ accuracy } = $numerator / $denominator * 100;
+    
+    # no need to return anything, we're using ref
+}
+
+=head2 &_calculate_sensitivity ( $c_matrix_ref )
+
+Calculates and adds the data for the C<sensitivity> key in the confusion matrix hash.
+
+=cut
+
+sub _calculate_sensitivity {
+    my $c_matrix = shift;
+    
+    my $numerator = $c_matrix->{ true_positive };
+    my $denominator = $numerator + $c_matrix->{ false_negative };
+    
+    $c_matrix->{ sensitivity } = $numerator / $denominator * 100;
+
+    # no need to return anything, we're using ref
 }
 
 =head2 &save_perceptron( $nerve_file )
