@@ -8,6 +8,9 @@ use Test::Output;
 
 use My::Perceptron;
 
+#use local::lib;
+use Text::Matrix;
+
 use FindBin;
 
 use constant TEST_FILE => $FindBin::Bin . "/book_list_test-filled.csv";
@@ -30,6 +33,11 @@ is ( $c_matrix{ true_negative }, 4, "Correct true_negative" );
 is ( $c_matrix{ false_positive }, 1, "Correct false_positive" );
 is ( $c_matrix{ false_negative }, 3, "Correct false_negative" );
 
+is ( $c_matrix{ total_entries }, 10, "Total entries is correct" );
+ok ( My::Perceptron::_calculate_total_entries( \%c_matrix ), 
+    "Testing the 'untestable' &_calculate_total_entries" );
+is ( $c_matrix{ total_entries }, 10, "'illegal' calculation of total entries is correct" );
+
 like ( $c_matrix{ accuracy }, qr/60/, "Accuracy seems correct to me" );
 ok ( My::Perceptron::_calculate_accuracy( \%c_matrix ), 
     "Testing the 'untestable' &_calculate_accuracy" );
@@ -40,18 +48,61 @@ ok ( My::Perceptron::_calculate_sensitivity( \%c_matrix ),
     "Testing the 'untestable' &_calculate_sensitivity" );
 like ( $c_matrix{ accuracy }, qr/60/, "'illegal' calculation of sensitivity seems correct to me" );
 
-eval {
-    $perceptron->get_confusion_matrix( { 
-        full_data_file => NON_BINARY_FILE,
-        actual_output_header => "brand",
-        predicted_output_header => "predicted",
-    } );
-};
+{
+    local $@;
+    eval {
+        $perceptron->get_confusion_matrix( { 
+            full_data_file => NON_BINARY_FILE,
+            actual_output_header => "brand",
+            predicted_output_header => "predicted",
+        } );
+    };
 
-like ( $@, qr/Something\'s wrong\!/, "Croaked! Found non-binary values in file");
+    like ( $@, qr/Something\'s wrong\!/, "Croaked! Found non-binary values in file");
+}
 
-#use Data::Dumper;
-#print Dumper( \%c_matrix ), "\n";
+stdout_like {
+    
+    ok ( 
+        $perceptron->display_confusion_matrix( \%c_matrix, { 
+            zero_as => "MP520", one_as => "Yi Lin" 
+        } ),
+    "display_confusion_matrix is working");
+    
+} qr /(A\:)|(P\:)|(actua)|(predicted)|(entries)|(Accuracy)|(Sensitivity)|(MP520)|(Yi Lin)/n, 
+    "Correct stuff displayed";
+
+{
+    local $@;
+    
+    eval {
+        $perceptron->display_confusion_matrix( \%c_matrix, { one_as => "Yi Lin" } );
+    };
+    
+    like ( $@, qr/zero_as/, "Missing keys found: zero_as!" );
+    unlike ( $@, qr/one_as/, "Confirmed one_as is present but not zero_as" );
+}
+
+{
+    local $@;
+    
+    eval {
+        $perceptron->display_confusion_matrix( \%c_matrix, { zero_as => "MP520" } );
+    };
+    
+    like ( $@, qr/one_as/, "Missing keys found: one_as!" );
+    unlike ( $@, qr/zero_as/, "Confirmed zero_as is present but not one_as" );
+}
+
+{
+    local $@;
+    
+    eval {
+        $perceptron->display_confusion_matrix( \%c_matrix );
+    };
+    
+    like ( $@, qr/zero_as one_as/, "Both keys not found" );
+}
 
 done_testing;
 

@@ -31,8 +31,8 @@ done_testing;
 #           [v] accuracy
 #           [v] sensitivity
 #   [v] remove the return value for "train" method
-#   [] display confusion matrix data to console
-#       [] use Text:Matrix
+#   [v] display confusion matrix data to console
+#       [v] use Text:Matrix
 #
 # Version 0.04
 #   -add synonyms
