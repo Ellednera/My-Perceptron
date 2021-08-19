@@ -13,7 +13,7 @@ done_testing;
 #       [v] read csv - for training stage
 #   [v] able to save the actual perceptron object and load it back
 #
-# Version 0.02
+# Version 0.02 - completed on 17 August 2021
 #   [v] implement output algorithm for train and finalize it
 #   [v] read and calculate data line by line, not bulk, so no shuffling method
 #   [v] implement validate method
@@ -24,13 +24,21 @@ done_testing;
 #       [v] write into a new csv file - validation and testing stages
 #
 # Version 0.03
-#   -implement confusion matrix
+#   [v] implement confusion matrix
+#       [v] read only expected and predicted columns, line by line
+#       [v] return a hash of data
+#           [v] TP, TN, FP, FN
+#           [v] accuracy
+#           [v] sensitivity
+#   [v] remove the return value for "train" method
+#   [v] display confusion matrix data to console
+#       [v] use Text:Matrix
 #
 # Version 0.04
 #   -add synonyms
 #
 # Version 0.0x
-#   -implement shuffling system with bulk data processing
+#   -implement shuffling system
 
 ############ unimplemented ############
 

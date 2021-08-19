@@ -50,7 +50,8 @@ is ( $@, "", "No problem with \'train\' method (verbose) so far" );
 
 ok ( $perceptron->train( TRAINING_DATA, "brand", $nerve_file), "No problem with \'train\' method (non-verbose) so far" );
 
-is ( $perceptron->train( TRAINING_DATA, "brand", $nerve_file), $nerve_file, "\'train\' method returns the correct value" );
+# no longer returns the file anymore since v0.03
+# is ( $perceptron->train( TRAINING_DATA, "brand", $nerve_file), $nerve_file, "\'train\' method returns the correct value" );
 
 ok( My::Perceptron->can("save_perceptron"), "&save_perceptron is persent" );
 ok( My::Perceptron->can("load_perceptron"), "&loaded_perceptron is present" );
