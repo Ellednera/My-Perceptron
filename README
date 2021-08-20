@@ -1,11 +1,10 @@
-My-Perceptron
+My::Perceptron (v0.04)
 
 This module provides methods to build, train, validate and test a perceptron. It can also save the data of the perceptron for future use for any actual AI programs.
 
 This module is also aimed to help newbies grasp hold of the concept of perceptron, training, validation and testing as much as possible. Hence, all the methods and subroutines in this module are decoupled as much as possible so that the actual scripts can be written as simple complete programs.
 
-This module is not uploaded to CPAN. So the only way to read the documentation is 
-by running the "perldoc" command.
+This module is not uploaded to CPAN yet. You can read the documentation in the docs directory or through by running the "perldoc" command.
 
 INSTALLATION
 
@@ -23,17 +22,9 @@ perldoc command.
 
     perldoc My::Perceptron
 
-You can also look for information at:
+CONTACT
 
-    RT, CPAN's request tracker (report bugs here)
-        https://rt.cpan.org/NoAuth/Bugs.html?Dist=My-Perceptron
-
-    CPAN Ratings
-        https://cpanratings.perl.org/d/My-Perceptron
-
-    Search CPAN
-        https://metacpan.org/release/My-Perceptron
-
+Raphael Jong Jun Jie, <ellednera at cpan.org>
 
 LICENSE AND COPYRIGHT
 
