@@ -35,7 +35,17 @@ done_testing;
 #       [v] use Text:Matrix
 #
 # Version 0.04
-#   -add synonyms
+#   [v] add synonyms
+#       [v] synonyms MUST call actual subroutines and not copy pasting!
+#       train: [v] tame  [v] exercise
+#       validate: [v] take_mock_exam  [v] take_lab_test
+#       test: [v] take_real_exam  [v] work_in_real_world
+#       generate_confusion_matrix: [v] get_exam_results
+#       display_confusion_matrix: [v] display_exam_results
+#       save_perceptron: [v] preserve
+#       load_perceptron: [v] revive
+#   [] refactor codes
+#   [] improve the documentation
 #
 # Version 0.0x
 #   -implement shuffling system
