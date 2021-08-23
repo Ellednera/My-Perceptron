@@ -34,7 +34,7 @@ done_testing;
 #   [v] display confusion matrix data to console
 #       [v] use Text:Matrix
 #
-# Version 0.04
+# Version 0.04 / AI::Perceptron::Simple v1.00
 #   [v] add synonyms
 #       [v] synonyms MUST call actual subroutines and not copy pasting!
 #       train: [v] tame  [v] exercise
@@ -44,12 +44,14 @@ done_testing;
 #       display_confusion_matrix: [v] display_exam_results
 #       save_perceptron: [v] preserve
 #       load_perceptron: [v] revive
+#
+# AI::Perceptron::Simple v1.01
 #   [] refactor codes
 #   [] improve the documentation
 #
-# Version 0.0x
+# Version ?.??
 #   -implement shuffling system
-
+#
 ############ unimplemented ############
 
 # these three steps could be done in seperated scripts if necessary
