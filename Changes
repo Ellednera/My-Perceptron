@@ -1,5 +1,17 @@
 Revision history for My-Perceptron
 
+!! After version 0.04 is done, this module will no longer be maintained as it is renamed and uploaded to CPAN. See AI-Perceptron-Simple on my github repo or visit MetaCPAN and search for AI::Perceptron::Simple.
+
+Version 0.04    23 AUGUST 2021
+* The following synonyms were implemented
+    synonyms MUST call actual subroutines and not copy pasting!
+    * train: tame, exercise
+    * validate: take_mock_exam, take_lab_test
+    * test:  take_real_exam, work_in_real_world
+    * generate_confusion_matrix: get_exam_results
+    * display_confusion_matrix: display_exam_results
+    * save_perceptron: preserve
+    * load_perceptron: revive
 
 Version 0.03    19 AUGUST 2021
 * The followings have been implemented:

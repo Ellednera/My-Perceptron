@@ -22,7 +22,7 @@ Version 0.03
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 # default values
 use constant LEARNING_RATE => 0.05;
@@ -89,7 +89,9 @@ use constant TUNE_DOWN => 0;
     } );
 
     # accessing the confusion matrix
-    for ( true_positive true_negative false_positive false_negative total_entries accuracy sensitivity ) {
+    my @keys = qw( true_positive true_negative false_positive false_negative 
+                   total_entries accuracy sensitivity );
+    for ( @keys ) {
         print $_, " => ", $c_matrix{ $_ }, "\n";
     }
 
@@ -133,7 +135,7 @@ None.
 
 Almost everything is OO with some exceptions of course :)
 
-=head1 SUBROUTINES/METHODS
+=head1 CREATION RELATED SUBROUTINES/METHODS
 
 =head2 new ( \%options )
 
@@ -172,8 +174,6 @@ Generally speaking, this value is usually between 0 and 1. However, it all depen
 =back
 
 =cut
-
-# CREATION OF PERCEPTRON
 
 sub new {
     my $class = shift;
@@ -221,7 +221,7 @@ sub get_attributes {
     %{ $self->{attributes_hash_ref} };
 }
 
-=head2 learning_rate( $value )
+=head2 learning_rate ( $value )
 
 =head2 learning_rate
 
@@ -240,7 +240,7 @@ sub learning_rate {
     }
 }
 
-=head2 threshold( $value )
+=head2 threshold ( $value )
 
 =head2 threshold
 
@@ -259,11 +259,17 @@ sub threshold {
     }
 }
 
-# TRAINING STAGE
+=head1 TRAINING RELATED SUBROUTINES/METHODS
 
-=head2 train( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file )
+All the training methods here have the same parameters as the two actual C<train> method and they all do the same stuff. They are also used in the same way.
 
-=head2 train( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file, $display_stats, $identifier )
+=head2 tame ( ... )
+
+=head2 exercise ( ... )
+
+=head2 train ( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file )
+
+=head2 train ( $stimuli_train_csv, $expected_output_header, $save_nerve_to_file, $display_stats, $identifier )
 
 Trains the perceptron. 
 
@@ -277,6 +283,10 @@ C<$display_stats> is B<optional> and the default is 0. It will display more outp
 
 =over 4
 
+=item tuning status
+
+Indicates the nerve was tuned up or down
+
 =item old sum
 
 The original sum of all C<weightage * input>
@@ -285,15 +295,25 @@ The original sum of all C<weightage * input>
 
 The threshold of the nerve
 
-=item new output as well as it was tuned up or down
+=item new sum
 
 The new sum of all C<weightage * input> after fine-tuning the nerve
 
 =back
 
-If C<$display_stats> is set to C<1>, the you must specify the C<$identifier>. This is the column / header name that is used to identify a specific row of data in C<$stimuli_train_csv>.
+If C<$display_stats> is set to C<1>, then you must specify the C<$identifier>. This is the column / header name that is used to identify a specific row of data in C<$stimuli_train_csv>.
 
 =cut
+
+sub tame {
+    #my $self = shift;
+    #$self->train( @_ );
+    train( @_ );
+}
+
+sub exercise {
+    train( @_ );
+}
 
 sub train {
     my $self = shift;
@@ -478,6 +498,13 @@ sub _tune {
     #1; #last; # calling last here will give warnings
 }
 
+=head1 VALIDATION RELATED METHODS
+
+All the validation methods here have the same parameters as the actual C<validate> method and they all do the same stuff. They are also used in the same way.
+
+=head2 take_mock_exam (...)
+
+=head2 take_lab_test (...)
 
 =head2 validate ( \%options )
 
@@ -513,10 +540,28 @@ I<*This method will call &_real_validate_or_test to do the actual work.>
 
 =cut
 
+sub take_mock_exam {
+    my ( $self, $data_hash_ref ) = @_;
+    $self->_real_validate_or_test( $data_hash_ref );
+}
+
+sub take_lab_test {
+    my ( $self, $data_hash_ref ) = @_;
+    $self->_real_validate_or_test( $data_hash_ref );
+}
+
 sub validate {
     my ( $self, $data_hash_ref ) = @_;
     $self->_real_validate_or_test( $data_hash_ref );
 }
+
+=head1 TESTING RELATED SUBROUTINES/METHODS
+
+All the testing methods here have the same parameters as the actual C<test> method and they all do the same stuff. They are also used in the same way.
+
+=head2 take_real_exam (...)
+
+=head2 work_in_real_world (...)
 
 =head2 test ( \%options )
 
@@ -527,6 +572,17 @@ This method works and behaves the same way as the C<validate> method. See C<vali
 I<*This method will call &_real_validate_or_test to do the actual work.>
 
 =cut
+
+# redirect to _real_validate_or_test
+sub take_real_exam {
+    my ( $self, $data_hash_ref ) = @_;
+    $self->_real_validate_or_test( $data_hash_ref );
+}
+
+sub work_in_real_world {
+    my ( $self, $data_hash_ref ) = @_;
+    $self->_real_validate_or_test( $data_hash_ref );
+}
 
 sub test {
     my ( $self, $data_hash_ref ) = @_;
@@ -583,7 +639,7 @@ sub _real_validate_or_test {
 
 This is where the filling in of the predicted values takes place. Take note that the parameters naming are the same as the ones used in the C<validate> and C<test> method.
 
-This subroutine should be called in the procedural way
+This subroutine should be called in the procedural way.
 
 =cut
 
@@ -620,6 +676,14 @@ sub _fill_predicted_values {
     $aoa;
 }
 
+=head1 RESULTS RELATED SUBROUTINES/METHODS
+
+This part is related to generating the confusion matrix.
+
+=head2 get_exam_results ( ... )
+
+The parameters and usage are the same as C<get_confusion_matrix>. See the next method.
+
 =head2 get_confusion_matrix ( \%options )
 
 Returns the confusion matrix in the form of a hash. The hash will contain these keys: C<true_positive>, C<true_negative>, C<false_positive>, C<false_negative>, C<accuracy>, C<sensitivity>.
@@ -654,10 +718,16 @@ The binary values are treated as follows:
 
 =cut
 
+sub get_exam_results {
+    my ( $self, $info ) = @_;
+    
+    $self->get_confusion_matrix( $info );
+}
+
 sub get_confusion_matrix {
     my ( $self, $info ) = @_;
 
-    my %c_matrix = _collect_stats( $info ); # sub again: accuracy, sensitivity
+    my %c_matrix = _collect_stats( $info ); # processes total_entries, accuracy, sensitivity etc
     
     %c_matrix;
 }
@@ -789,6 +859,10 @@ sub _calculate_sensitivity {
     # no need to return anything, we're using ref
 }
 
+=head2 display_exam_results ( ... )
+
+The parameters are the same as C<display_confusion_matrix>. See the next method.
+
 =head2 display_confusion_matrix ( \%confusion_matrix, \%labels ) 
 
 Display the confusion matrix.
@@ -810,6 +884,13 @@ Please take note that non-ascii characters ie. non-English alphabets will cause 
 For the C<%labels>, there is no need to enter "actual X", "predicted X" etc. It will be indicated with C<A: > for actual and C<P: > for the predicted values.
 
 =cut
+
+sub display_exam_results {
+    my $self = shift;
+    my ( $c_matrix, $labels ) = @_;
+    
+    $self->display_confusion_matrix( $c_matrix, $labels );
+}
 
 sub display_confusion_matrix {
     my ( $self, $c_matrix, $labels ) = @_;
@@ -844,16 +925,28 @@ sub display_confusion_matrix {
     print "~~" x24, "\n";
 }
 
-=head2 &save_perceptron( $nerve_file )
+=head1 NERVE DATA RELATED SUBROUTINES
+
+This part is about saving the state of the nerve.
+
+B<The subroutines are to be called in the procedural way>. No checking is done currently.
+
+The subroutines here are not exported in any way whatsoever.
+
+=head2 preserve ( ... )
+
+The parameters and usage are the same as C<save_perceptron>. See the next subroutine.
+
+=head2 save_perceptron ( $nerve_file )
 
 Saves the C<My::Perceptron> object into a C<Storable> file. There shouldn't be a need to call this method manually since after every 
 training process this will be called automatically.
 
-This subroutine is not exported in any way whatsoever.
-
-This subroutine is to be called in the procedural way. No checking is done currently.
-
 =cut
+
+sub preserve {
+    save_perceptron( @_ );
+}
 
 sub save_perceptron {
     my $self = shift;
@@ -863,15 +956,19 @@ sub save_perceptron {
     no Storable;
 }
 
-=head2 &load_perceptron( $nerve_file_to_load )
+=head2 revive (...)
+
+The parameters and usage are the same as C<load_perceptron>. See the next subroutine.
+
+=head2 load_perceptron ( $nerve_file_to_load )
 
 Loads the data and turns it into a C<My::Perceptron> object as the return value.
 
-This subroutine is not exported in any way whatsoever.
-
-This subroutine is to be called in the procedural way. No checking is done currently.
-
 =cut
+
+sub revive {
+    load_perceptron( @_ );
+}
 
 sub load_perceptron {
     my $nerve_file_to_load = shift;
@@ -888,10 +985,7 @@ Raphael Jong Jun Jie, C<< <ellednera at cpan.org> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-my-perceptron at rt.cpan.org>, or through
-the web interface at L<https://rt.cpan.org/NoAuth/ReportBug.html?Queue=My-Perceptron>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
+Please email me if you happen to find any bugs. 
 
 =head1 ACKNOWLEDGEMENTS
 
